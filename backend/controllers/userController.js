@@ -4,49 +4,56 @@ import bcrypt from "bcrypt";
 
 // Register a new user
 export const registerUser = async (req, res) => {
-    try {
-        const { email, password, name } = req.body;
+  try {
+    const { email, password, name } = req.body;
 
-        // Check if user already exists
-        const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            return res.status(400).json({
-                message: "User already exists with this email"
-            });
-        }
-
-        // Hash the password
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        // Create new user
-        const user = await User.create({
-            email,
-            password: hashedPassword,
-            name: name || "",  // Optional name field
-        });
-
-        // Generate JWT token
-        const token = jwt.sign(
-            { id: user._id, email: user.email },
-            process.env.JWT_SECRET,  // Add this to your .env file
-            { expiresIn: "7d" }
-        );
-
-        res.status(201).json({
-            message: "User registered successfully",
-            token,
-            user: {
-                id: user._id,
-                email: user.email,
-                name: user.name,
-            }
-        });
-
-    } catch (error) {
-        res.status(500).json({
-            message: error.message
-        });
+    if (!email || !password) {
+      return res.status(400).json({
+        message: "Email and password are required"
+      });
     }
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({
+        message: "User already exists"
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = await User.create({
+      email,
+      password: hashedPassword,
+      name: name || ""
+    });
+
+    if (!process.env.JWT_SECRET) {
+      throw new Error("JWT_SECRET is missing in environment variables");
+    }
+
+    const token = jwt.sign(
+      { id: user._id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    return res.status(201).json({
+      message: "User registered successfully",
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name
+      }
+    });
+
+  } catch (error) {
+    console.log("REGISTER ERROR:", error);
+    return res.status(500).json({
+      message: error.message
+    });
+  }
 };
 
 // Login user
