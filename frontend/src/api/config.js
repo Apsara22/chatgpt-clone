@@ -1,13 +1,13 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: 'http://localhost:5000/api', // Your backend URL
+  baseURL: 'https://chatgpt-clone-haop.vercel.app/api',
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Request interceptor to add token to requests (for later use)
+// Request interceptor
 API.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -16,9 +16,7 @@ API.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 export default API;
